@@ -15,6 +15,9 @@ define('BITLY_API_KEY', '');
 define('MOBYPICTURE_API_KEY', '');
 define('FLICKR_API_KEY', '');
 
+//Optional server time-offset in seconds. When your server is not running GMT.
+define('SERVER_TIME_OFFSET', +3600);
+
 // Base URL, should point to your website, including a trailing slash
 // Can be set manually but the following code tries to work it out automatically.
 $base_url = 'http://'.$_SERVER['HTTP_HOST'];

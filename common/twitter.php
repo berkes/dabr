@@ -902,7 +902,7 @@ function twitter_date($format, $timestamp = null) {
   if (!isset($timestamp)) {
     $timestamp = time();
   }
-  return gmdate($format, $timestamp + $offset);
+  return gmdate($format, $timestamp + $offset + SERVER_TIME_OFFSET);
 }
 
 function twitter_standard_timeline($feed, $source) {
