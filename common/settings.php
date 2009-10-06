@@ -1,10 +1,9 @@
 <?php
   
-$GLOBALS['colour_schemes'] = array(
-  1 => 'Ugly Orange|b50,ddd,111,555,fff,eee,ffa,dd9,e81,c40,fff',
-  2 => 'Touch Blue|138,ddd,111,555,fff,eee,ffa,dd9,138,fff,fff',
-  3 => 'Sickly Green|293C03,ccc,000,555,fff,eee,CCE691,ACC671,495C23,919C35,fff',
-  4 => 'Kris\' Purple|d5d,000,ddd,999,222,111,202,101,909,222,000,000'
+$GLOBALS['colour_schemes'] = array(  1 => 'Touch Blue|138,ddd,111,555,fff,eee,ffa,dd9,138,fff,fff',
+  2 => 'Sickly Green|293C03,ccc,000,555,fff,eee,CCE691,ACC671,495C23,919C35,fff',
+  3 => 'Kris\' Purple|d5d,000,ddd,999,222,111,202,101,909,222,000,000',
+  4 => 'Ugly Orange|b50,ddd,111,555,fff,eee,ffa,dd9,e81,c40,fff',
 );
 
 menu_register(array(
