@@ -102,11 +102,6 @@ menu_register(array(
     'hidden' => true,
     'callback' => 'generate_thumbnail',
   ),
-  'mobypicture' => array(
-    'security' => true,
-    'hidden' => true,
-    'callback' => 'generate_thumbnail',
-  ),
   'moblog' => array(
     'security' => true,
     'hidden' => true,
@@ -126,13 +121,46 @@ menu_register(array(
     'callback' => 'twitter_trends_page',
   ),
 ));
+/*
+function long_url($shortURL)
+{
+	$url = "http://www.longurlplease.com/api/v1.1?q=" . $shortURL;
+	$curl_handle=curl_init();
+	curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
+	curl_setopt($curl_handle,CURLOPT_URL,$url);
+	$url_json = curl_exec($curl_handle);
+	curl_close($curl_handle);
+
+	$url_array = json_decode($url_json,true);
+	
+	$url_long = $url_array["$shortURL"];
+	
+	if ($url_long == null)
+	{
+		return $shortURL;
+	}
+	
+	return $url_long;
+}
+*/
+
+function friendship_exists($user_a) {
+  $request = 'http://twitter.com/friendships/show.json?target_screen_name=' . $user_a;
+  $following = twitter_process($request);
+  
+  if ($following->relationship->target->following == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 function twitter_block_exists($query) 
 {
 	//http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-blocks-blocking-ids
 	//Get an array of all ids the authenticated user is blocking
 	$request = 'http://twitter.com/blocks/blocking/ids.json';
-	$blocked = twitter_process($request);
+	$blocked = (array) twitter_process($request);
 	
 	//bool in_array  ( mixed $needle  , array $haystack  [, bool $strict  ] )		
 	//If the authenticate user has blocked $query it will appear in the array
@@ -227,7 +255,7 @@ function twitter_process($url, $post_data = false) {
   if (user_type() != 'oauth' && user_is_authenticated())
     curl_setopt($ch, CURLOPT_USERPWD, user_current_username().':'.$GLOBALS['user']['password']);
 
-  curl_setopt($ch, CURLOPT_VERBOSE, 1);
+  curl_setopt($ch, CURLOPT_VERBOSE, 0);
   curl_setopt($ch, CURLOPT_HEADER, 0);
   curl_setopt($ch, CURLOPT_TIMEOUT, 10);
   curl_setopt($ch, CURLOPT_USERAGENT, 'dabr');
@@ -335,55 +363,43 @@ function flickr_encode($num) {
 function twitter_photo_replace($text) {
   $images = array();
   $tmp = strip_tags($text);
-  if (preg_match_all('#twitgoo.com/([\d\w]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[1] as $match) {
-      $images[] = theme('external_link', "http://twitgoo.com/{$match}", "<img src='http://twitgoo.com/show/thumb/{$match}' class='twitpic' />");
+  
+  // List of supported services. Array format: pattern => thumbnail url
+  $services = array(
+    '#youtube\.com\/watch\?v=([_-\d\w]+)#i' => 'http://i.ytimg.com/vi/%s/1.jpg',
+    '#twitpic.com/([\d\w]+)#i' => 'http://twitpic.com/show/thumb/%s',
+    '#twitgoo.com/([\d\w]+)#i' => 'http://twitgoo.com/show/thumb/%s',
+    '#yfrog.com/([\w\d]+)#i' => 'http://yfrog.com/%s.th.jpg',
+    '#moblog.net/view/([\d]+)/#' => 'moblog/%s',
+    '#hellotxt.com/i/([\d\w]+)#i' => 'http://hellotxt.com/image/%s.s.jpg',
+    '#ts1.in/(\d+)#i' => 'http://ts1.in/mini/%s',
+    '#moby.to/\??([\w\d]+)#i' => 'http://moby.to/?%s:square',
+    '#mobypicture.com/\?([\w\d]+)#i' => 'http://mobypicture.com/?%s:square',
+  );
+  
+  // Only enable Flickr service if API key is available
+  if (defined('FLICKR_API_KEY')) {
+    $services['#flickr.com/[^ ]+/([\d]+)#i'] = 'flickr/%s';
+    $services['#flic.kr/p/([\w\d]+)#i'] = 'flickr/%s';
+  }
+  
+  // Loop through each service and show images for matching URLs
+  foreach ($services as $pattern => $thumbnail_url) {
+    if (preg_match_all($pattern, $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
+      foreach ($matches[1] as $key => $match) {
+        $images[] = theme('external_link', 'http://'.$matches[0][$key], '<img src="'.sprintf($thumbnail_url, $match).'" />');
+      }
     }
   }
-  if (preg_match_all('#twitpic.com/([\d\w]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[1] as $match) {
-       $images[] = theme('external_link', "http://twitpic.com/{$match}", "<img src='http://twitpic.com/show/thumb/{$match}' class='twitpic' />");
-    }
-  }
-  if (preg_match_all('#yfrog.([a-zA-Z.]{2,5})/([0-9a-zA-Z]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[2] as $key => $match) {
-       $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='http://yfrog.{$matches[1][$key]}/{$match}.th.jpg' />");
-    }
-  }
+ 
+  // Twitxr is handled differently because of their folder structure
   if (preg_match_all('#twitxr.com/[^ ]+/updates/([\d]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
     foreach ($matches[1] as $key => $match) {
       $thumb = 'http://twitxr.com/thumbnails/'.substr($match, -2).'/'.$match.'_th.jpg';
-       $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='$thumb' />");
+      $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='$thumb' />");
     }
   }
-  if (preg_match_all('#moblog.net/view/([\d]+)/#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[1] as $key => $match) {
-       $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='moblog/$match' />");
-    }
-  }
-  if (preg_match_all('#hellotxt.com/i/([\d\w]+)#i', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[1] as $key => $match) {
-       $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='http://hellotxt.com/image/{$match}.s.jpg' />");
-    }
-  }
-  if (defined('FLICKR_API_KEY')) {
-    if(preg_match_all('#flickr.com/[^ ]+/([\d]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-      foreach ($matches[1] as $key => $match) {
-         $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='flickr/$match' />");
-      }
-    }
-    if(preg_match_all('#flic.kr/p/([\w\d]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-      foreach ($matches[1] as $key => $match) {
-        $id = flickr_decode($match);
-         $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='flickr/$id' />");
-      }
-    }
-  }
-  if (defined('MOBYPICTURE_API_KEY') && preg_match_all('#mobypicture.com/\?([a-z0-9]+)#', $tmp, $matches, PREG_PATTERN_ORDER) > 0) {
-    foreach ($matches[1] as $key => $match) {
-       $images[] = theme('external_link', "http://{$matches[0][$key]}", "<img src='mobypicture/$match' />");
-    }
-  }
+  
   if (empty($images)) return $text;
   return implode('<br />', $images).'<br />'.$text;
 }
@@ -393,6 +409,7 @@ function generate_thumbnail($query) {
   if ($id) {
     header('HTTP/1.1 301 Moved Permanently');
     if ($query[0] == 'flickr') {
+      if (!is_numeric($id)) $id = flickr_decode($id);
       $url = "http://api.flickr.com/services/rest/?method=flickr.photos.getSizes&photo_id=$id&api_key=".FLICKR_API_KEY;
       $flickr_xml = twitter_fetch($url);
       if (setting_fetch('browser') == 'mobile') {
@@ -402,11 +419,6 @@ function generate_thumbnail($query) {
       }
       preg_match($pattern, $flickr_xml, $matches);
       header('Location: '. $matches[1]);
-    }
-    if ($query[0] == 'mobypicture') {
-      $url = "http://api.mobypicture.com/?action=getThumbUrl&t={$id}&s=thumbnail&k=".MOBYPICTURE_API_KEY;
-      $thumb = twitter_fetch($url);
-      header('Location: '. $thumb);
     }
     if ($query[0] == 'moblog') {
       $url = "http://moblog.net/view/{$id}/";
@@ -463,7 +475,7 @@ function twitter_status_page($query) {
 
 function twitter_thread_timeline($thread_id) {
   $request = "http://search.twitter.com/search/thread/{$thread_id}";
-  $tl = twitter_standard_timeline(json_decode(twitter_fetch($request)), 'thread');
+  $tl = twitter_standard_timeline(twitter_fetch($request), 'thread');
   return $tl;
 }
 
@@ -666,9 +678,14 @@ function theme_directs_menu() {
 
 function theme_directs_form($to) {
   if ($to) {
-    $html_to = "Sending direct message to <b>$to</b><input name='to' value='$to' type='hidden'>";
+	
+	if (friendship_exists($to) != 1)
+	{
+		$html_to = "<em>Warning</em> <b>" . $to . "</b> is not following you. You cannot send them a Direct Message :-(<br/>";
+	}
+    $html_to .= "Sending direct message to <b>$to</b><input name='to' value='$to' type='hidden'>";
   } else {
-    $html_to = "To: <input name='to'><br />Message:";
+    $html_to .= "To: <input name='to'><br />Message:";
   }
    $content = "<form action='directs/send' method='post'>$html_to<br><textarea name='message' cols='50' rows='3' id='message'></textarea><br><input type='submit' value='Send'><span id='remaining'>140</span></form>";
    $content .= js_counter("message");
@@ -718,7 +735,7 @@ function twitter_user_page($query) {
       $in_reply_to_id = 0;
     }
     $user = twitter_user_info($screen_name);
-    if ($user->screen_name != user_current_username()) {
+    if (!user_is_current_user($user->screen_name)) {
       $status = "@{$user->screen_name} ";
     } else {
       $status = '';
@@ -727,11 +744,7 @@ function twitter_user_page($query) {
     $content .= theme('user_header', $user);
     
     if (isset($user->status)) {
-      if (user_type() == 'oauth') {
-        $request = "http://twitter.com/statuses/user_timeline/{$screen_name}.json?page=".intval($_GET['page']);
-      } else {
-        $request = "http://twitter.com/statuses/user_timeline.json?screen_name={$screen_name}&page=".intval($_GET['page']);
-      }
+      $request = "http://twitter.com/statuses/user_timeline.json?screen_name={$screen_name}&page=".intval($_GET['page']);
       $tl = twitter_process($request);
       $tl = twitter_standard_timeline($tl, 'user');
       $content .= theme('timeline', $tl);
@@ -805,7 +818,7 @@ function theme_status($status) {
   $out .= "<p>$parsed</p>
 <table align='center'><tr><td>$avatar</td><td><a href='user/{$status->user->screen_name}'>{$status->user->screen_name}</a>
 <br />$time_since</td></tr></table>";
-  if (strtolower(user_current_username()) == strtolower($status->user->screen_name)) {
+  if (user_is_current_user($status->user->screen_name)) {
     $out .= "<form action='delete/{$status->id}' method='post'><input type='submit' value='Delete without confirmation' /></form>";
   }
   return $out;
@@ -907,7 +920,7 @@ function twitter_date($format, $timestamp = null) {
 
 function twitter_standard_timeline($feed, $source) {
   $output = array();
-  if (!is_array($feed)) return $output;
+  if (!is_array($feed) && $source != 'thread') return $output;
   switch ($source) {
     case 'favourites':
     case 'friends':
@@ -1012,11 +1025,7 @@ function preg_match_one($pattern, $subject, $flags = NULL) {
 function twitter_user_info($username = null) {
   if (!$username)
   $username = user_current_username();
-  if (user_type() == 'oauth') {
-    $request = "http://twitter.com/users/show/$username.json";
-  } else {
-    $request = "http://twitter.com/users/show.json?screen_name=$username";
-  }
+  $request = "http://twitter.com/users/show.json?screen_name=$username";
   $user = twitter_process($request);
   return $user;
 }
@@ -1071,12 +1080,12 @@ function twitter_is_reply($status) {
     return false;
   }
   $user = user_current_username();
-  return preg_match("#@$user#", $status->text);
+  return preg_match("#@$user#i", $status->text);
 }
 
 function theme_followers($feed) {
   $rows = array();
-  if (count($feed) == 0) return '<p>No users to display.</p>';
+  if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
   foreach ($feed as $user) {
     $name = theme('full_name', $user);
     $rows[] = array(
@@ -1129,7 +1138,18 @@ function theme_search_form($query) {
 
 function theme_external_link($url, $content = null) {
   if (!$content) $content = $url;
-  return "<a href='$url' target='_blank'>$content</a>";
+	return "<a href='$url' target='_blank'>$content</a>";
+  /*
+	//Long URL functionality.  Also uncomment function long_url($shortURL)
+		if (!$content) 
+	{	
+		return "<a href='$url' target='_blank'>".long_url($url)."</a>";
+	}
+	else
+	{
+		return "<a href='$url' target='_blank'>$content</a>";
+	}
+	*/
 }
 
 function theme_pagination() {
@@ -1146,23 +1166,22 @@ function theme_pagination() {
 
 function theme_action_icons($status) {
   $from = $status->from->screen_name;
-  $current_user = user_current_username();
   $actions = array();
   
   if (!$status->is_direct) {
     $actions[] = theme('action_icon', "user/{$from}/reply/{$status->id}", 'images/reply.png', '@');
   }
-  if ($from != $current_user) {
+  if (!user_is_current_user($from)) {
     $actions[] = theme('action_icon', "directs/create/{$from}", 'images/dm.png', 'DM');
   }
   if (!$status->is_direct) {
     if ($status->favorited == '1') {
       $actions[] = theme('action_icon', "unfavourite/{$status->id}", 'images/star.png', 'UNFAV');
     } else {
-      $actions[] = theme('action_icon', "unfavourite/{$status->id}", 'images/star_grey.png', 'FAV');
+      $actions[] = theme('action_icon', "favourite/{$status->id}", 'images/star_grey.png', 'FAV');
     }
     $actions[] = theme('action_icon', "retweet/{$status->id}", 'images/retweet.png', 'RT');
-    if ($from == $current_user) {
+    if (user_is_current_user($from)) {
       $actions[] = theme('action_icon', "confirm/delete/{$status->id}", 'images/trash.gif', 'DEL');
     }
   } else {

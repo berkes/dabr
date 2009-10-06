@@ -12,7 +12,6 @@ define('BITLY_LOGIN', '');
 define('BITLY_API_KEY', '');
 
 // Optional API keys for retrieving thumbnails
-define('MOBYPICTURE_API_KEY', '');
 define('FLICKR_API_KEY', '');
 
 //Optional server time-offset in seconds. When your server is not running GMT.
