@@ -94,7 +94,7 @@ function user_ensure_authenticated() {
   if (!user_is_authenticated()) {
     $content = theme('login');
     $content .= file_get_contents('about.html');
-    theme('page', 'Login', $content);
+    theme('page', 'Login - Dabr: a mobile web interface to Twitter', $content);
   }
 }
 
