@@ -20,17 +20,15 @@ menu_register(array(
 function lists_paginated_process($url) {
 	// Adds cursor/pagination parameters to a query
 	$cursor = $_GET['cursor'];
-	if (!is_numeric($cursor)) {
-		$cursor = -1;
+	if (is_numeric($cursor)) {
+		$url .= '?cursor='.$_GET['cursor'];
 	}
-	$url .= '?cursor='.$cursor;
-	$xml = twitter_process($url);
-	return simplexml_load_string($xml);
+	return simplexml_load_string(twitter_process($url));
 }
 
 function twitter_lists_tweets($user, $list) {
 	// Tweets belonging to a list
-	$url = API_URL."{$user}/lists/{$list}/statuses.json";
+	$url = "http://twitter.com/{$user}/lists/{$list}/statuses.json";
 	$page = intval($_GET['page']);
 	if ($page > 0) $url .= '?page='.$page;
 	return twitter_process($url);
@@ -38,22 +36,22 @@ function twitter_lists_tweets($user, $list) {
 
 function twitter_lists_user_lists($user) {
 	// Lists a user has created
-	return lists_paginated_process(API_URL."{$user}/lists.xml");
+	return lists_paginated_process("http://twitter.com/{$user}/lists.xml");
 }
 
 function twitter_lists_user_memberships($user) {
 	// Lists a user belongs to
-	return lists_paginated_process(API_URL."{$user}/lists/memberships.xml");
+	return lists_paginated_process("http://twitter.com/{$user}/lists/memberships.xml");
 }
 
 function twitter_lists_list_members($user, $list) {
 	// Members of a list
-	return lists_paginated_process(API_URL."{$user}/{$list}/members.xml");
+	return lists_paginated_process("http://twitter.com/{$user}/{$list}/members.xml");
 }
 
 function twitter_lists_list_subscribers($user, $list) {
 	// Subscribers of a list
-	return lists_paginated_process(API_URL."{$user}/{$list}/subscribers.xml");
+	return lists_paginated_process("http://twitter.com/{$user}/{$list}/subscribers.xml");
 }
 
 
@@ -137,7 +135,7 @@ function lists_membership_page($user) {
 function lists_list_tweets_page($user, $list) {
 	// Show tweets in a list
 	$tweets = twitter_lists_tweets($user, $list);
-	$tl = twitter_standard_timeline($tweets, 'user');
+	$tl = twitter_standard_timeline($tweets, 'public');
 	$content = theme('status_form');
   $list_url = "lists/{$user}/{$list}";
   $content .= "<p>Tweets in <a href='user/{$user}'>@{$user}</a>/<strong>{$list}</strong> | <a href='{$list_url}/members'>View Members</a> | <a href='{$list_url}/subscribers'>View Subscribers</a></p>";
@@ -151,7 +149,7 @@ function lists_list_members_page($user, $list) {
 	$p = twitter_lists_list_members($user, $list);
 	
 	// TODO: use a different theme() function? Add a "delete member" link for each member
-	$content = theme('followers', $p, 1);
+	$content = theme('followers', $p->users->user, 1);
 	$content .= theme('list_pagination', $p);
 	theme('page', "Members of {$user}/{$list}", $content);
 }
