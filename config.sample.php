@@ -14,7 +14,6 @@ define('BITLY_API_KEY', '');
 // Optional API keys for retrieving thumbnails
 define('FLICKR_API_KEY', '');
 
-
 //Optional server time-offset in seconds. When your server is not running GMT.
 define('SERVER_TIME_OFFSET', +3600);
 
@@ -29,5 +28,31 @@ if ($directory = trim(dirname($_SERVER['SCRIPT_NAME']), '/\,')) {
   $base_url .= '/'.$directory;
 }
 define('BASE_URL', $base_url.'/');
+
+// Google Analytics Mobile tracking code
+// You need to download ga.php from the Google Analytics website for this to work
+// Copyright 2009 Google Inc. All Rights Reserved.
+$GA_ACCOUNT = "";
+$GA_PIXEL = "ga.php";
+
+function googleAnalyticsGetImageUrl() {
+  global $GA_ACCOUNT, $GA_PIXEL;
+  $url = "";
+  $url .= $GA_PIXEL . "?";
+  $url .= "utmac=" . $GA_ACCOUNT;
+  $url .= "&utmn=" . rand(0, 0x7fffffff);
+  $referer = $_SERVER["HTTP_REFERER"];
+  $query = $_SERVER["QUERY_STRING"];
+  $path = $_SERVER["REQUEST_URI"];
+  if (empty($referer)) {
+    $referer = "-";
+  }
+  $url .= "&utmr=" . urlencode($referer);
+  if (!empty($path)) {
+    $url .= "&utmp=" . urlencode($path);
+  }
+  $url .= "&guid=ON";
+  return str_replace("&", "&amp;", $url);
+}
 
 ?>

@@ -4,6 +4,7 @@ $GLOBALS['colour_schemes'] = array(  1 => 'Touch Blue|138,ddd,111,555,fff,eee,f
   2 => 'Sickly Green|293C03,ccc,000,555,fff,eee,CCE691,ACC671,495C23,919C35,fff',
   3 => 'Kris\' Purple|d5d,000,ddd,999,222,111,202,101,909,222,000,000',
   4 => 'Ugly Orange|b50,ddd,111,555,fff,eee,ffa,dd9,e81,c40,fff',
+  5 => '#red|d12,ddd,111,555,fff,eee,ffa,dd9,c12,fff,fff',
 );
 
 menu_register(array(
