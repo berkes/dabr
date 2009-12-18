@@ -116,7 +116,14 @@ function user_is_authenticated() {
     if ($_POST['username'] && $_POST['password']) {
       $GLOBALS['user']['username'] = trim($_POST['username']);
       $GLOBALS['user']['password'] = $_POST['password'];
-      $GLOBALS['user']['api'] = empty(trim($_POST['api'])) ? constant('API_URL') : $_POST['api'];
+
+      if (trim($_POST['api'])) {
+        $GLOBALS['user']['api'] = $_POST['api'];
+      }
+      else {
+        $GLOBALS['user']['api'] = constant('API_URL');
+      }
+      
       if(preg_match('/https?:\/\/(.*)/',$GLOBALS['user']['api'])==0){
           $GLOBALS['user']['api'] = 'http://'.$GLOBALS['user']['api'];
       }

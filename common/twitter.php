@@ -588,25 +588,6 @@ function twitter_spam_page($query)
 	twitter_refresh("user/{$user}");
 }
 
-
-function twitter_spam_page($query) 
-{
-	//http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-report_spam
-	//We need to post this data
-	twitter_ensure_post_action();
-	$user = $query[1];
-
-	//The data we need to post
-	$post_data = array("screen_name" => $user);
-
-	$request = "http://twitter.com/report_spam.json";
-	twitter_process($request, $post_data);
-
-	//Where should we return the user to?  Back to the user
-	twitter_refresh("user/{$user}");
-}
-
-
 function twitter_confirmation_page($query) 
 {
 	// the URL /confirm can be passed parameters like so /confirm/param1/param2/param3 etc.
