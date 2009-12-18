@@ -264,6 +264,9 @@ function twitter_process($url, $post_data = false) {
     $post_data = implode('&', $s);
   }
   
+      if(user_type() !=='oauth' && !empty($GLOBALS['user']['api']) && $GLOBALS['user']['api'] !== 'http://twitter.com/' ){
+          $url = str_replace('http://twitter.com/',$GLOBALS['user']['api'],$url);
+      }
   $ch = curl_init($url);
 
   if($post_data !== false && !$_GET['page']) {

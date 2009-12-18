@@ -116,6 +116,11 @@ function user_is_authenticated() {
     if ($_POST['username'] && $_POST['password']) {
       $GLOBALS['user']['username'] = trim($_POST['username']);
       $GLOBALS['user']['password'] = $_POST['password'];
+      $GLOBALS['user']['api'] = empty(trim($_POST['api'])) ? constant('API_URL') : $_POST['api'];
+      if(preg_match('/https?:\/\/(.*)/',$GLOBALS['user']['api'])==0){
+          $GLOBALS['user']['api'] = 'http://'.$GLOBALS['user']['api'];
+      }
+      $GLOBALS['user']['api'] = trim($GLOBALS['user']['api'],'/').'/';
       $GLOBALS['user']['type'] = 'normal';
       _user_save_cookie($_POST['stay-logged-in'] == 'yes');
       header('Location: '. BASE_URL);
@@ -153,7 +158,7 @@ function _user_encryption_key() {
 }
 
 function _user_encrypt_cookie() {
-  $plain_text = $GLOBALS['user']['username'] . ':' . $GLOBALS['user']['password'] . ':' . $GLOBALS['user']['type'];
+  $plain_text = urlencode($GLOBALS['user']['username']) . ':' . urlencode($GLOBALS['user']['password']) . ':' . urlencode($GLOBALS['user']['type']) . ':' . urlencode($GLOBALS['user']['api']);
   
   $td = mcrypt_module_open('blowfish', '', 'cfb', '');
   $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
@@ -173,7 +178,11 @@ function _user_decrypt_cookie($crypt_text) {
   $plain_text = mdecrypt_generic($td, $crypt_text);
   mcrypt_generic_deinit($td);
   
-  list($GLOBALS['user']['username'], $GLOBALS['user']['password'], $GLOBALS['user']['type']) = explode(':', $plain_text);
+  list($GLOBALS['user']['username'], $GLOBALS['user']['password'], $GLOBALS['user']['type'],$GLOBALS['user']['api']) = explode(':', $plain_text);
+  $GLOBALS['user']['username'] = urldecode($GLOBALS['user']['username']);
+  $GLOBALS['user']['password'] = urldecode($GLOBALS['user']['password']);
+  $GLOBALS['user']['type'] = urldecode($GLOBALS['user']['type']);
+  $GLOBALS['user']['api'] = urldecode($GLOBALS['user']['api']);
 }
 
 function theme_login() {
@@ -185,6 +194,8 @@ Note: Twitter\'s OAuth page isn\'t very mobile friendly.</p>
 <form method="post" action="'.$_GET['q'].'">
 <p>Username <input name="username" size="15" />
 <br />Password <input name="password" type="password" size="15" />
+<br />API URL&nbsp;&nbsp;<input name="api" size="15" />
+<br />Note:leave this blank if you don\'t know what\'s this!
 <br /><label><input type="checkbox" value="yes" name="stay-logged-in" /> Stay logged in? </label>
 <br /><input type="submit" value="Sign In" /></p>
 </form>
@@ -194,5 +205,6 @@ Note: Twitter\'s OAuth page isn\'t very mobile friendly.</p>
 function theme_logged_out() {
   return '<p>Logged out. <a href="">Login again</a></p>';
 }
+
 
 ?>
