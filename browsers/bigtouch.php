@@ -2,18 +2,22 @@
 
 require 'desktop.php';
 
-function touch_theme_status_form($text = '', $in_reply_to_id = NULL) {
+function bigtouch_theme_action_icon($url, $image_url, $text) {
+  return "<a href='$url'><img src='$image_url' class='bigger' /></a>";
+}
+
+function bigtouch_theme_status_form($text = '', $in_reply_to_id = NULL) {
   return desktop_theme_status_form($text, $in_reply_to_id);
 }
-function touch_theme_search_form($query) {
+function bigtouch_theme_search_form($query) {
   return desktop_theme_search_form($query);
 }
 
-function touch_theme_avatar($url, $force_large = false) {
+function bigtouch_theme_avatar($url, $force_large = false) {
   return "<img src='$url' width='48' height='48' />";
 }
 
-function touch_theme_page($title, $content) {
+function bigtouch_theme_page($title, $content) {
   $body = theme('menu_top');
   $body .= $content;
   $body .= theme('google_analytics');
@@ -29,7 +33,7 @@ function touch_theme_page($title, $content) {
   exit();
 }
 
-function touch_theme_menu_top() {
+function bigtouch_theme_menu_top() {
   $links = array();
   $main_menu_titles = array('home', 'replies', 'directs', 'search');
   foreach (menu_visible_items() as $url => $page) {
@@ -49,11 +53,11 @@ function touch_theme_menu_top() {
   return $html;
 }
 
-function touch_theme_menu_bottom() {
+function bigtouch_theme_menu_bottom() {
   return '';
 }
 
-function touch_theme_status_time_link($status, $is_link = true) {
+function bigtouch_theme_status_time_link($status, $is_link = true) {
   $out = theme_status_time_link($status, $is_link);
   $out = str_replace(array(' ago', ' years', ' days', ' hours', ' min', ' sec'),
                      array('', 'y', 'd', 'h', 'm', 's'), $out);
@@ -61,9 +65,8 @@ function touch_theme_status_time_link($status, $is_link = true) {
 }
 
 
-function touch_theme_css() {
-  $out = '<link rel="stylesheet" href="browsers/touch.css" />';
-  //~ $out .= '<style type="text/css">body { word-wrap: break-word; text-overflow: ellipsis; } table {width: 320px;}</style>';
+function bigtouch_theme_css() {
+  $out = '<link rel="stylesheet" href="browsers/bigtouch.css" />';
   $out .= theme_css();
   $out .= '<script type="text/javascript">'.file_get_contents('browsers/touch.js').'</script>';
   return $out;

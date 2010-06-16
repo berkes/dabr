@@ -19,7 +19,7 @@ function user_oauth() {
   if ($oauth_token = $_GET['oauth_token']) {
     // Generate ACCESS token request
     $params = array('oauth_verifier' => $_GET['oauth_verifier']);
-    $response = twitter_process('https://twitter.com/oauth/access_token', $params);
+    $response = twitter_process('http://api.twitter.com/oauth/access_token', $params);
     parse_str($response, $token);
     
     // Store ACCESS tokens in COOKIE
@@ -27,7 +27,7 @@ function user_oauth() {
     
     // Fetch the user's screen name with a quick API call
     unset($_SESSION['oauth_request_token_secret']);
-    $user = twitter_process('http://twitter.com/account/verify_credentials.json');
+    $user = twitter_process('http://api.twitter.com/account/verify_credentials.json');
     $GLOBALS['user']['username'] = $user->screen_name;
     
     _user_save_cookie(1);
@@ -37,14 +37,14 @@ function user_oauth() {
   } else {
     // Generate AUTH token request
     $params = array('oauth_callback' => BASE_URL.'oauth');
-    $response = twitter_process('https://twitter.com/oauth/request_token', $params);
+    $response = twitter_process('http://api.twitter.com/oauth/request_token', $params);
     parse_str($response, $token);
     
     // Save secret token to session to validate the result that comes back from Twitter
     $_SESSION['oauth_request_token_secret'] = $token['oauth_token_secret'];
     
     // redirect user to authorisation URL
-    $authorise_url = 'https://twitter.com/oauth/authorize?oauth_token='.$token['oauth_token'];
+    $authorise_url = 'http://api.twitter.com/oauth/authorize?oauth_token='.$token['oauth_token'];
     header("Location: $authorise_url");
   }
 }
@@ -177,18 +177,16 @@ function _user_decrypt_cookie($crypt_text) {
 }
 
 function theme_login() {
-  return '
-<p><strong><a href="oauth">Sign in with Twitter/OAuth</a></strong><br />
-Note: Twitter\'s OAuth page isn\'t very mobile friendly.</p>
-  
-  <p>Or enter your Twitter username and password below:</p>
-<form method="post" action="'.$_GET['q'].'">
-<p>Username <input name="username" size="15" />
-<br />Password <input name="password" type="password" size="15" />
-<br /><label><input type="checkbox" value="yes" name="stay-logged-in" /> Stay logged in? </label>
-<br /><input type="submit" value="Sign In" /></p>
-</form>
-';
+	return '
+			<p><a href="oauth"><img src="images/twitter_button_2_lo.gif" alt="Sign in with Twitter/OAuth" width="165" height="28" /></a> (mobile friendly).</p>
+			<p>Or enter your Twitter username and password below:</p>
+			<form method="post" action="'.$_GET['q'].'">
+				<p>Username <input name="username" size="15" />
+				<br />Password <input name="password" type="password" size="15" />
+				<br /><label><input type="checkbox" value="yes" name="stay-logged-in" /> Stay logged in? </label>
+				<br /><input type="submit" value="Sign In" /></p>
+			</form>
+			';
 }
 
 function theme_logged_out() {

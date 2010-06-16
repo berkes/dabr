@@ -4,7 +4,8 @@ $GLOBALS['colour_schemes'] = array(
   1 => 'Ugly Orange|b50,ddd,111,555,fff,eee,ffa,dd9,e81,c40,fff',
   2 => 'Touch Blue|138,ddd,111,555,fff,eee,ffa,dd9,138,fff,fff',
   3 => 'Sickly Green|293C03,ccc,000,555,fff,eee,CCE691,ACC671,495C23,919C35,fff',
-  4 => 'Kris\' Purple|d5d,000,ddd,999,222,111,202,101,909,222,000,000'
+  4 => 'Kris\' Purple|d5d,000,ddd,999,222,111,202,101,909,222,000,000',
+  5 => '#red|d12,ddd,111,555,fff,eee,ffa,dd9,c12,fff,fff',
 );
 
 menu_register(array(
@@ -42,14 +43,18 @@ function setting_fetch($setting, $default = NULL) {
   }
 }
 
+function setcookie_year($name, $value) {
+    $duration = time() + (3600 * 24 * 365);
+    setcookie($name, $value, $duration, '/');
+}
+
 function settings_page($args) {
   if ($args[1] == 'save') {
     $settings['browser'] = $_POST['browser'];
     $settings['gwt'] = $_POST['gwt'];
     $settings['colours'] = $_POST['colours'];
     $settings['reverse'] = $_POST['reverse'];
-    $duration = time() + (3600 * 24 * 365);
-    setcookie('settings', base64_encode(serialize($settings)), $duration, '/');
+	setcookie_year('settings', base64_encode(serialize($settings)));
     twitter_refresh('');
   }
   
@@ -59,6 +64,7 @@ function settings_page($args) {
     'desktop' => 'PC/Laptop',
     'text' => 'Text only',
     'worksafe' => 'Work Safe',
+    'bigtouch' => 'Big Touch',
   );
   
   $gwt = array(
